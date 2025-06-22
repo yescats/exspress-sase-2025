@@ -10,13 +10,6 @@ const repo = AppDataSource.getRepository(User)
 export class UserService {
     static async register(model: RegisterModel) {
         console.log('I start')
-        const boom = await repo.count()
-        console.log(boom)
-        const tempor = await this.getUserById(1)
-        if (tempor != null) {
-            console.log('I exist')
-            console.log(tempor.email)
-        }
         const data = await repo.existsBy({
             email: model.email,
             deletedAt: IsNull()
@@ -67,5 +60,16 @@ export class UserService {
                 deletedAt: Date.now()
             })
         }
+    }
+    static async addVisited(id: number, spot: number) {
+        const user = await this.getUserById(id)
+        if (user == null) {
+            throw new Error("USER_NOT_EXIST")
+        }
+        const newSpot = user.lastSpotId
+        repo.save({
+            lastSpotId: spot
+        })
+        
     }
 }
