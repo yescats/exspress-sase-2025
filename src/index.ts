@@ -8,6 +8,7 @@ import http from 'http'
 import { SpotRoute } from './routes/spot.route'
 
 const app = express()
+app.use(express.json())
 app.use(cors())
 app.use(morgan('tiny'))
 
@@ -29,5 +30,5 @@ AppDataSource.initialize().then(() => {
 })
 .catch(e=>{
     console.log('erm, didnt connect oopsie')
-    console.log('e')
+    console.log(e)
 })

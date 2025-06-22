@@ -25,8 +25,8 @@ export class User {
   @Column("varchar", { name: "name", length: 255 })
   name: string;
 
-  @Column("int", { name: "spot_id", nullable: true, unsigned: true })
-  spotId: number | null;
+  @Column("int", { name: "last_spot_id", nullable: true, unsigned: true })
+  lastSpotId: number | null;
 
   @Column("datetime", {
     name: "created_at",
