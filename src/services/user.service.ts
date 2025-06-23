@@ -2,12 +2,73 @@ import { IsNull } from "typeorm";
 import { AppDataSource } from "../db";
 import { User } from "../entities/User";
 import type { RegisterModel } from "../models/register.model";
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import type { LoginModel } from "../models/login.model";
+import jwt from "jsonwebtoken";
+import type { Response } from "express";
+import { sendError } from "../utils";
 
 
 const repo = AppDataSource.getRepository(User)
-
+const tokenSecret = process.env.JWT_SECRET
+const accessTTL = process.env.JWT_ACCESS_TTL
+const refreshTTL = process.env.JWT_REFRESH_TTL
 export class UserService {
+
+    static async login(model: LoginModel) {
+        const user = await this.getUserByEmail(model.email)
+
+        if (await bcrypt.compare(model.password, user!.password)) {
+            const payload = {
+                id: user!.userId,
+                email: user!.email
+            }
+
+            return {
+                name: user!.name,
+                access: jwt.sign(payload, tokenSecret, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret, { expiresIn: refreshTTL })
+            }
+        }
+        throw new Error("BAD_CREDENTIALS")
+    }
+
+    static async verifyToken(req: any, res: Response, next: Function) {
+        const whitelist = ['/api/user/login']
+
+        //next()
+        //return
+
+        if (whitelist.includes(req.path)) {
+            next()
+            return
+        }
+
+        const authHeader = req.headers['authorization']
+        console.log("checkpoint 1")
+        const token = authHeader && authHeader.split(' ')[1]
+
+        if (token == undefined) {
+            res.status(401).json({
+                message: "NO_TOKEN_FOUND",
+                timestamp: new Date()
+            })
+            return
+        }
+
+        jwt.verify(token, tokenSecret, (err: any, user: any) => {
+            if (err) {
+                res.status(403).json({
+                    message: "INVALID_TOKEN",
+                    timestamp: new Date()
+                })
+            }
+
+            req.user = user
+            next()
+        })
+    }
+
     static async register(model: RegisterModel) {
         console.log('I start')
         const data = await repo.existsBy({
@@ -15,14 +76,17 @@ export class UserService {
             deletedAt: IsNull()
         })
 
-        if (data)
+
+        if (data){
             throw new Error("USER_ALREADY_EXISTS")
+        }
+            
 
         const hashed = await bcrypt.hash(model.password, 12)
         await repo.save({
             email: model.email,
             password: hashed,
-            name: model.name
+            name: model.name,
         })
     }
 
@@ -54,8 +118,8 @@ export class UserService {
         return data
     }
 
-    static async deleteUser(id: number) {
-        if (await this.getUserById(id)) {
+    static async deleteUser(email: string) {
+        if (await this.getUserByEmail(email)) {
             await repo.save({
                 deletedAt: Date.now()
             })

@@ -3,5 +3,4 @@ export interface SpotModel{
     location: string
     description: string
     image: string
-    addedBy: number
 }

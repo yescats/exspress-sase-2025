@@ -6,6 +6,7 @@ import { AppDataSource } from './db'
 import { UserRoute } from './routes/user.route'
 import http from 'http'
 import { SpotRoute } from './routes/spot.route'
+import { UserService } from './services/user.service'
 
 const app = express()
 app.use(express.json())
@@ -13,7 +14,7 @@ app.use(cors())
 app.use(morgan('tiny'))
 
 
-
+app.use(UserService.verifyToken)
 app.use('/api/user', UserRoute)
 app.use('/api/spot', SpotRoute)
 
