@@ -4,6 +4,18 @@ import { sendError } from "../utils";
 
 export const UserRoute = Router()
 
+//UserRoute.
+
+UserRoute.post('/login', async (req, res) => {
+    try {
+        res.json(await UserService.login(req.body))
+        
+    } catch (e: any) {
+        sendError(res, e, 401)
+    }
+    
+})
+
 UserRoute.post('/register', async (req, res) => {
     console.log('I am?')
     try {
@@ -14,7 +26,7 @@ UserRoute.post('/register', async (req, res) => {
     }
 })
 
-UserRoute.put('/delete', async (require, res) => {
+UserRoute.put('/delete', async (req, res) => {
     try {
         res.json(await UserService.deleteUser(req.body))
     } catch (e: any) {
@@ -36,6 +48,3 @@ UserRoute.get('/register', async (req, res) => {
     res.send('bocchi da rock')
 })
 
-UserRoute.get('/', async (req, res) => {
-    res.send('bawomp')
-})

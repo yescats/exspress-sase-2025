@@ -21,6 +21,20 @@ export class SpotService {
             description: model?.description,
             added_by: user_id
         })
+        console.log("checkpoint 3")
+    }
+
+    static async getSpotById(id: number) {
+        const data = repo.findOne({
+            where:{
+                spotId: id,
+                deletedAt: IsNull()
+            }
+        })
+        if (data == null) {
+            throw new Error("SPOT_NOT_EXIST")
+        }
+        return data
     }
 
     static async getSpotByLocation(place: string) {

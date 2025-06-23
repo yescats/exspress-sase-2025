@@ -4,7 +4,6 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { User } from "./User";
@@ -48,7 +47,4 @@ export class Spot {
   })
   @JoinColumn([{ name: "added_by", referencedColumnName: "userId" }])
   addedBy2: User;
-
-  @OneToMany(() => User, (user) => user.spot)
-  users: User[];
 }

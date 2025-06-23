@@ -2,15 +2,13 @@ import {
   Column,
   Entity,
   Index,
-  JoinColumn,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Spot } from "./Spot";
 
 @Index("email_UNIQUE", ["email"], { unique: true })
-@Index("fk_spot_id_idx", ["spotId"], {})
+@Index("fk_spot_id_idx", ["lastSpotId"], {})
 @Entity("user", { schema: "sase_final_db" })
 export class User {
   @PrimaryGeneratedColumn({ type: "int", name: "user_id", unsigned: true })
@@ -42,11 +40,4 @@ export class User {
 
   @OneToMany(() => Spot, (spot) => spot.addedBy2)
   spots: Spot[];
-
-  @ManyToOne(() => Spot, (spot) => spot.users, {
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-  })
-  @JoinColumn([{ name: "spot_id", referencedColumnName: "spotId" }])
-  spot: Spot;
 }
