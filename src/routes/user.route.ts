@@ -7,6 +7,7 @@ export const UserRoute = Router()
 //UserRoute.
 
 UserRoute.post('/login', async (req, res) => {
+    console.log('Yey')
     try {
         res.json(await UserService.login(req.body))
         

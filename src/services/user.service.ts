@@ -26,15 +26,15 @@ export class UserService {
 
             return {
                 name: user!.name,
-                access: jwt.sign(payload, tokenSecret, { expiresIn: accessTTL }),
-                refresh: jwt.sign(payload, tokenSecret, { expiresIn: refreshTTL })
+                access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
             }
         }
         throw new Error("BAD_CREDENTIALS")
     }
 
     static async verifyToken(req: any, res: Response, next: Function) {
-        const whitelist = ['/api/user/login']
+        const whitelist = ['/api/user/login', '/api/user/register']
 
         //next()
         //return
@@ -56,7 +56,7 @@ export class UserService {
             return
         }
 
-        jwt.verify(token, tokenSecret, (err: any, user: any) => {
+        jwt.verify(token, tokenSecret!, (err: any, user: any) => {
             if (err) {
                 res.status(403).json({
                     message: "INVALID_TOKEN",
@@ -67,6 +67,23 @@ export class UserService {
             req.user = user
             next()
         })
+    }
+
+    static async refreshToken(token: string) {
+        const decoded: any = jwt.verify(token, tokenSecret!)
+        const user = await this.getUserByEmail(decoded.email)
+
+        const payload = {
+                id: user?.userId,
+                email: user?.email
+        }
+        
+
+        return {
+            name: user?.email,
+            access: jwt.sign(payload, tokenSecret, { expiresIn: accessTTL }),
+            refresh: token
+        }
     }
 
     static async register(model: RegisterModel) {
