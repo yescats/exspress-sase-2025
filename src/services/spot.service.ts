@@ -24,6 +24,14 @@ export class SpotService {
         console.log("checkpoint 3")
     }
 
+    static async getSpots() {
+        const data = repo.find()
+        if (data == null) {
+            throw new Error("NO_DATA___SOMEHOW")
+        }
+        return data
+    }
+
     static async getSpotById(id: number) {
         const data = repo.findOne({
             where:{

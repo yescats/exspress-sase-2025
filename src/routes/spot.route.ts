@@ -24,5 +24,9 @@ SpotRoute.get('/:id', async (require, res) => {
 })
 
 SpotRoute.get('/', async (req, res) => {
-    res.send('ojds')
+    try {
+        res.json(await SpotService.getSpots())
+    } catch (e) {
+        sendError(res, e)
+    }
 }) 

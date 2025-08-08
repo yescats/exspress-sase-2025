@@ -34,12 +34,9 @@ export class UserService {
     }
 
     static async verifyToken(req: any, res: Response, next: Function) {
-        const whitelist = ['/api/user/login', '/api/user/register']
+        const whitelist = ['/api/user/login', '/api/user/register', '/api/user/refresh']
 
-        //next()
-        //return
-
-        if (whitelist.includes(req.path)) {
+        if (whitelist.includes(req.originalUrl)) {
             next()
             return
         }
@@ -49,13 +46,14 @@ export class UserService {
         const token = authHeader && authHeader.split(' ')[1]
 
         if (token == undefined) {
+            console.log(req.originalUrl)
             res.status(401).json({
                 message: "NO_TOKEN_FOUND",
                 timestamp: new Date()
             })
             return
         }
-
+        console.log("checkpoint 2")
         jwt.verify(token, tokenSecret!, (err: any, user: any) => {
             if (err) {
                 res.status(403).json({
