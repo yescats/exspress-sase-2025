@@ -7,6 +7,7 @@ import type { LoginModel } from "../models/login.model";
 import jwt from "jsonwebtoken";
 import type { Response } from "express";
 import { sendError } from "../utils";
+import type { DeleteModel } from "../models/delete.model";
 
 
 const repo = AppDataSource.getRepository(User)
@@ -26,6 +27,7 @@ export class UserService {
 
             return {
                 name: user!.name,
+                email: user!.email,
                 access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
                 refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
             }
@@ -34,9 +36,10 @@ export class UserService {
     }
 
     static async verifyToken(req: any, res: Response, next: Function) {
-        const whitelist = ['/api/user/login', '/api/user/register', '/api/user/refresh']
+        const whitelist = ['/api/user/login', '/api/user/register', '/api/user/refresh', '/api/user/delete']
 
         if (whitelist.includes(req.originalUrl)) {
+            console.log("whitelisted")
             next()
             return
         }
@@ -85,27 +88,64 @@ export class UserService {
     }
 
     static async register(model: RegisterModel) {
-        console.log('I start')
+        console.log('register checkpoint 1')
         const data = await repo.existsBy({
             email: model.email,
             deletedAt: IsNull()
         })
-
+        console.log('register checkpoint 2')
 
         if (data){
+            console.log("exists")
             throw new Error("USER_ALREADY_EXISTS")
         }
-            
-
-        const hashed = await bcrypt.hash(model.password, 12)
-        await repo.save({
-            email: model.email,
-            password: hashed,
-            name: model.name,
+        const userdata = await repo.existsBy({
+            email: model.email
         })
+        if (!userdata) {
+            console.log('register checpoint 3')
+            const hashed = await bcrypt.hash(model.password, 12)
+            console.log('register checkpoint 4')
+            await repo.save({
+                email: model.email,
+                password: hashed,
+                name: model.name,
+                })
+
+            const user = await this.getUserByEmail(model.email)
+            const payload = {
+                id: user!.userId,
+                email: user!.email
+            }
+            return {
+                name: user!.name,
+                email: user!.email,
+                access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
+            }
+
+        } else {
+            const hashed = await bcrypt.hash(model.password, 12)
+            await repo.update({email: model.email}, {password: hashed, name: model.name, updatedAt: new Date(), deletedAt: null})
+            const user = await this.getUserByEmail(model.email)
+            const payload = {
+                id: user!.userId,
+                email: user!.email
+            }
+            return {
+                name: user!.name,
+                email: user!.email,
+                access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
+            }
+        }
+
+        
     }
 
     static async getUserByEmail(email: string) {
+        console.log("getuserbyemail")
+        console.log(email)
         const data = repo.findOne({
             where: {
                 email: email,
@@ -113,9 +153,10 @@ export class UserService {
             }
         })
 
-        if (data == null) 
+        if (data == null) {
+            console.log("Ouch")
             throw new Error("USER_NOT_EXIST")
-
+        }
         return data
     }
 
@@ -133,12 +174,14 @@ export class UserService {
         return data
     }
 
-    static async deleteUser(email: string) {
-        if (await this.getUserByEmail(email)) {
-            await repo.save({
-                deletedAt: Date.now()
-            })
-        }
+    static async deleteUser(model: DeleteModel) {
+        console.log("delete checkpoint 1")
+        console.log(model.email)
+        const user = await this.getUserByEmail(model.email)
+        console.log("delete checkpoint 2")
+        console.log(user!.userId)
+        await repo.update({ userId: user!.userId}, {deletedAt: new Date()})
+        console.log("delete checkpoint 3")
     }
     static async addVisited(id: number, spot: number) {
         const user = await this.getUserById(id)

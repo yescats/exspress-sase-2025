@@ -2,30 +2,38 @@ import { IsNull } from "typeorm";
 import { AppDataSource } from "../db";
 import { Spot } from "../entities/Spot"
 import type { SpotModel } from "../models/spot.model";
+import { UserService } from "./user.service";
 
 const repo = AppDataSource.getRepository(Spot)
 
 export class SpotService {
-    static async createSpot(model: SpotModel, user_id: number) {
+    static async createSpot(model: SpotModel, userId: number) {
+        console.log("createspot_start")
+        console.log(userId)
+
         const data = await repo.existsBy({
             location: model?.location,
             deletedAt: IsNull() 
         })
         if (data) {
+            console.log("already exists")
             throw new Error("SPOT_ALREADY_EXISTS")
         }
         await repo.save({
             location: model?.location,
-            image: model?.image,
             name: model?.name,
             description: model?.description,
-            added_by: user_id
+            addedBy: userId
         })
         console.log("checkpoint 3")
     }
 
     static async getSpots() {
-        const data = repo.find()
+        const data = repo.find({
+            where: {
+                deletedAt: IsNull()
+            }
+        })
         if (data == null) {
             throw new Error("NO_DATA___SOMEHOW")
         }
