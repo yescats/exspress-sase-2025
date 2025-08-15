@@ -26,6 +26,7 @@ export class UserService {
             }
 
             return {
+                userId: user!.userId,
                 name: user!.name,
                 email: user!.email,
                 access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
@@ -118,6 +119,7 @@ export class UserService {
                 email: user!.email
             }
             return {
+                userId: user!.userId,
                 name: user!.name,
                 email: user!.email,
                 access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
@@ -133,6 +135,7 @@ export class UserService {
                 email: user!.email
             }
             return {
+                userId: user!.userId,
                 name: user!.name,
                 email: user!.email,
                 access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),

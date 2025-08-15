@@ -66,11 +66,10 @@ export class SpotService {
         return data
     }
 
-    static async deleteSpot(spot: string, user_id: number) {
+    static async deleteSpot(spot_id: number, user_id: number) {
         const data = await repo.findOne({
             where: {
-                name: spot,
-                addedBy: user_id,
+                spotId: spot_id,
                 deletedAt: IsNull()
             }
         })
@@ -80,5 +79,18 @@ export class SpotService {
         await repo.save({
             deletedAt: Date.now()
         })
+    }
+
+    static async redactSpot(spot_id: number, spot: SpotModel) {
+        const data = await repo.findOne({
+            where: {
+                spotId: spot_id,
+                deletedAt: IsNull()
+            }
+        })
+        if (data == null) {
+            throw new Error("SPOT_NOT_EXIST")
+        }
+        await repo.update({spotId: spot_id}, {name: spot.name, location: spot.location, description: spot.description, updatedAt: Date.now()})
     }
 }

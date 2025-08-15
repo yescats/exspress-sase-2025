@@ -23,6 +23,15 @@ SpotRoute.get('/:id', async (require, res) => {
     }
 })
 
+SpotRoute.post('/:id/change', async (require, res) => {
+    try {
+        const id = Number(require.params.id)
+        await SpotService.redactSpot(id, require.body)
+    } catch (e: any) {
+
+    }
+})
+
 SpotRoute.get('/', async (req, res) => {
     try {
         res.json(await SpotService.getSpots())
