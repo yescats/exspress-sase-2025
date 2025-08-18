@@ -7,6 +7,14 @@ export const UserRoute = Router()
 
 //UserRoute.
 
+UserRoute.get('/', async (req, res) => {
+    try {
+        res.json(await UserService.getUsers())
+    } catch (e) {
+        sendError(res, e)
+    }
+})
+
 UserRoute.post('/login', async (req, res) => {
     console.log('Yey')
     try {

@@ -163,6 +163,21 @@ export class UserService {
         return data
     }
 
+    static async getUsers() {
+        console.log("user checkpoint 1")
+        const data = await repo.find({
+            where: {
+                deletedAt: IsNull()
+            }
+        })
+        if (data == null) {
+            console.log("user checkpoint failed")
+            throw new Error("NO_USERS___SOMEHOW")
+        }
+        console.log(data)
+        return data
+    }
+
     static async getUserById(id: number) {
         const data = repo.findOne({
             where: {
@@ -197,4 +212,5 @@ export class UserService {
         })
         
     }
+
 }
