@@ -89,24 +89,19 @@ export class UserService {
     }
 
     static async register(model: RegisterModel) {
-        console.log('register checkpoint 1')
         const data = await repo.existsBy({
             email: model.email,
             deletedAt: IsNull()
         })
-        console.log('register checkpoint 2')
 
         if (data){
-            console.log("exists")
             throw new Error("USER_ALREADY_EXISTS")
         }
         const userdata = await repo.existsBy({
             email: model.email
         })
         if (!userdata) {
-            console.log('register checpoint 3')
             const hashed = await bcrypt.hash(model.password, 12)
-            console.log('register checkpoint 4')
             await repo.save({
                 email: model.email,
                 password: hashed,
@@ -147,7 +142,6 @@ export class UserService {
     }
 
     static async getUserByEmail(email: string) {
-        console.log("getuserbyemail")
         console.log(email)
         const data = repo.findOne({
             where: {
@@ -157,24 +151,20 @@ export class UserService {
         })
 
         if (data == null) {
-            console.log("Ouch")
             throw new Error("USER_NOT_EXIST")
         }
         return data
     }
 
     static async getUsers() {
-        console.log("user checkpoint 1")
         const data = await repo.find({
             where: {
                 deletedAt: IsNull()
             }
         })
         if (data == null) {
-            console.log("user checkpoint failed")
             throw new Error("NO_USERS___SOMEHOW")
         }
-        console.log(data)
         return data
     }
 
@@ -193,13 +183,8 @@ export class UserService {
     }
 
     static async deleteUser(model: DeleteModel) {
-        console.log("delete checkpoint 1")
-        console.log(model.email)
         const user = await this.getUserByEmail(model.email)
-        console.log("delete checkpoint 2")
-        console.log(user!.userId)
         await repo.update({ userId: user!.userId}, {deletedAt: new Date()})
-        console.log("delete checkpoint 3")
     }
     static async addVisited(id: number, spot: number) {
         const user = await this.getUserById(id)

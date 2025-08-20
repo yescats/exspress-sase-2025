@@ -17,6 +17,9 @@ SpotRoute.post('/create', async (req: any, res) => {
 SpotRoute.get('/:id', async (require, res) => {
     try {
         const id = Number(require.params.id)
+        console.log("Id of the spot is:")
+        console.log(id)
+        
         res.json(await SpotService.getSpotById(id))
     } catch (e) {
         sendError(res, e)
@@ -26,9 +29,12 @@ SpotRoute.get('/:id', async (require, res) => {
 SpotRoute.post('/:id/change', async (require, res) => {
     try {
         const id = Number(require.params.id)
+        console.log("Id of the spot that is required to be changed is:")
+        console.log(id)
+        console.log(require.params.id)
         await SpotService.redactSpot(id, require.body)
     } catch (e: any) {
-
+        console.log("changing the spot... it didn't work")
     }
 })
 

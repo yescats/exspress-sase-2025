@@ -82,13 +82,23 @@ export class SpotService {
     }
 
     static async redactSpot(spot_id: number, spot: SpotModel) {
+        console.log("redacting spot checkpoint 1")
+        console.log(spot_id)
         const data = await repo.findOne({
             where: {
                 spotId: spot_id,
                 deletedAt: IsNull()
             }
         })
+        console.log("redacting spot checkpoint 2")
+        console.log(data)
+        console.log(data!.spotId)
+        console.log(spot)
+        console.log(spot.name)
+        console.log(spot.location)
+        console.log(spot.description)
         if (data == null) {
+            console.log("spot not found")
             throw new Error("SPOT_NOT_EXIST")
         }
         await repo.update({spotId: spot_id}, {name: spot.name, location: spot.location, description: spot.description, updatedAt: Date.now()})
