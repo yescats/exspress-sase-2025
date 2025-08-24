@@ -15,8 +15,16 @@ UserRoute.get('/', async (req, res) => {
     }
 })
 
+UserRoute.get('/:id', async (req, res) => {
+    try {
+        const id = Number(req.params.id)
+        res.json(await UserService.getUserById(id))
+    } catch (e) {
+        sendError(res, e)
+    }
+})
+
 UserRoute.post('/login', async (req, res) => {
-    console.log('Yey')
     try {
         res.json(await UserService.login(req.body))
         
@@ -27,7 +35,6 @@ UserRoute.post('/login', async (req, res) => {
 })
 
 UserRoute.post('/register', async (req, res) => {
-    console.log('I am?')
     try {
         res.json(await UserService.register(req.body))
         

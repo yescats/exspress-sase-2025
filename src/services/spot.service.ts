@@ -8,15 +8,12 @@ const repo = AppDataSource.getRepository(Spot)
 
 export class SpotService {
     static async createSpot(model: SpotModel, userId: number) {
-        console.log("createspot_start")
-        console.log(userId)
 
         const data = await repo.existsBy({
             location: model?.location,
             deletedAt: IsNull() 
         })
         if (data) {
-            console.log("already exists")
             throw new Error("SPOT_ALREADY_EXISTS")
         }
         await repo.save({
@@ -25,7 +22,6 @@ export class SpotService {
             description: model?.description,
             addedBy: userId
         })
-        console.log("checkpoint 3")
     }
 
     static async getSpots() {
@@ -66,41 +62,29 @@ export class SpotService {
         return data
     }
 
-    static async deleteSpot(spot_id: number, user_id: number) {
+    static async deleteSpot(spot_id: any) {
         const data = await repo.findOne({
             where: {
-                spotId: spot_id,
+                spotId: spot_id.id,
                 deletedAt: IsNull()
             }
         })
         if (data == null) {
             throw new Error("SPOT_NOT_EXIST")
         }
-        await repo.save({
-            deletedAt: Date.now()
-        })
+        await repo.update({spotId: data.spotId},{ deletedAt: new Date()})
     }
 
     static async redactSpot(spot_id: number, spot: SpotModel) {
-        console.log("redacting spot checkpoint 1")
-        console.log(spot_id)
         const data = await repo.findOne({
             where: {
                 spotId: spot_id,
                 deletedAt: IsNull()
             }
         })
-        console.log("redacting spot checkpoint 2")
-        console.log(data)
-        console.log(data!.spotId)
-        console.log(spot)
-        console.log(spot.name)
-        console.log(spot.location)
-        console.log(spot.description)
         if (data == null) {
-            console.log("spot not found")
             throw new Error("SPOT_NOT_EXIST")
         }
-        await repo.update({spotId: spot_id}, {name: spot.name, location: spot.location, description: spot.description, updatedAt: Date.now()})
+        await repo.update({spotId: data.spotId}, {name: spot.name, location: spot.location, description: spot.description, updatedAt: new Date()})
     }
 }
