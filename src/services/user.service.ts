@@ -7,6 +7,7 @@ import type { LoginModel } from "../models/login.model";
 import jwt from "jsonwebtoken";
 import type { Response } from "express";
 import { sendError } from "../utils";
+import type { DeleteModel } from "../models/delete.model";
 
 
 const repo = AppDataSource.getRepository(User)
@@ -25,27 +26,25 @@ export class UserService {
             }
 
             return {
+                userId: user!.userId,
                 name: user!.name,
-                access: jwt.sign(payload, tokenSecret, { expiresIn: accessTTL }),
-                refresh: jwt.sign(payload, tokenSecret, { expiresIn: refreshTTL })
+                email: user!.email,
+                access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
             }
         }
         throw new Error("BAD_CREDENTIALS")
     }
 
     static async verifyToken(req: any, res: Response, next: Function) {
-        const whitelist = ['/api/user/login']
+        const whitelist = ['/api/user/login', '/api/user/register', '/api/user/refresh', '/api/user/delete']
 
-        //next()
-        //return
-
-        if (whitelist.includes(req.path)) {
+        if (whitelist.includes(req.originalUrl)) {
             next()
             return
         }
 
         const authHeader = req.headers['authorization']
-        console.log("checkpoint 1")
         const token = authHeader && authHeader.split(' ')[1]
 
         if (token == undefined) {
@@ -55,8 +54,7 @@ export class UserService {
             })
             return
         }
-
-        jwt.verify(token, tokenSecret, (err: any, user: any) => {
+        jwt.verify(token, tokenSecret!, (err: any, user: any) => {
             if (err) {
                 res.status(403).json({
                     message: "INVALID_TOKEN",
@@ -69,25 +67,74 @@ export class UserService {
         })
     }
 
+    static async refreshToken(token: string) {
+        const decoded: any = jwt.verify(token, tokenSecret!)
+        const user = await this.getUserByEmail(decoded.email)
+
+        const payload = {
+                id: user?.userId,
+                email: user?.email
+        }
+        
+
+        return {
+            name: user?.email,
+            access: jwt.sign(payload, tokenSecret, { expiresIn: accessTTL }),
+            refresh: token
+        }
+    }
+
     static async register(model: RegisterModel) {
-        console.log('I start')
         const data = await repo.existsBy({
             email: model.email,
             deletedAt: IsNull()
         })
 
-
         if (data){
             throw new Error("USER_ALREADY_EXISTS")
         }
-            
-
-        const hashed = await bcrypt.hash(model.password, 12)
-        await repo.save({
-            email: model.email,
-            password: hashed,
-            name: model.name,
+        const userdata = await repo.existsBy({
+            email: model.email
         })
+        if (!userdata) {
+            const hashed = await bcrypt.hash(model.password, 12)
+            await repo.save({
+                email: model.email,
+                password: hashed,
+                name: model.name,
+                })
+
+            const user = await this.getUserByEmail(model.email)
+            const payload = {
+                id: user!.userId,
+                email: user!.email
+            }
+            return {
+                userId: user!.userId,
+                name: user!.name,
+                email: user!.email,
+                access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
+            }
+
+        } else {
+            const hashed = await bcrypt.hash(model.password, 12)
+            await repo.update({email: model.email}, {password: hashed, name: model.name, updatedAt: new Date(), deletedAt: null})
+            const user = await this.getUserByEmail(model.email)
+            const payload = {
+                id: user!.userId,
+                email: user!.email
+            }
+            return {
+                userId: user!.userId,
+                name: user!.name,
+                email: user!.email,
+                access: jwt.sign(payload, tokenSecret!, { expiresIn: accessTTL }),
+                refresh: jwt.sign(payload, tokenSecret!, { expiresIn: refreshTTL })
+            }
+        }
+
+        
     }
 
     static async getUserByEmail(email: string) {
@@ -98,9 +145,21 @@ export class UserService {
             }
         })
 
-        if (data == null) 
+        if (data == null) {
             throw new Error("USER_NOT_EXIST")
+        }
+        return data
+    }
 
+    static async getUsers() {
+        const data = await repo.find({
+            where: {
+                deletedAt: IsNull()
+            }
+        })
+        if (data == null) {
+            throw new Error("NO_USERS___SOMEHOW")
+        }
         return data
     }
 
@@ -118,12 +177,9 @@ export class UserService {
         return data
     }
 
-    static async deleteUser(email: string) {
-        if (await this.getUserByEmail(email)) {
-            await repo.save({
-                deletedAt: Date.now()
-            })
-        }
+    static async deleteUser(model: DeleteModel) {
+        const user = await this.getUserByEmail(model.email)
+        await repo.update({ userId: user!.userId}, {deletedAt: new Date()})
     }
     static async addVisited(id: number, spot: number) {
         const user = await this.getUserById(id)
@@ -136,4 +192,5 @@ export class UserService {
         })
         
     }
+
 }

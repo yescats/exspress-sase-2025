@@ -2,11 +2,13 @@ import { IsNull } from "typeorm";
 import { AppDataSource } from "../db";
 import { Spot } from "../entities/Spot"
 import type { SpotModel } from "../models/spot.model";
+import { UserService } from "./user.service";
 
 const repo = AppDataSource.getRepository(Spot)
 
 export class SpotService {
-    static async createSpot(model: SpotModel, user_id: number) {
+    static async createSpot(model: SpotModel, userId: number) {
+
         const data = await repo.existsBy({
             location: model?.location,
             deletedAt: IsNull() 
@@ -16,12 +18,22 @@ export class SpotService {
         }
         await repo.save({
             location: model?.location,
-            image: model?.image,
             name: model?.name,
             description: model?.description,
-            added_by: user_id
+            addedBy: userId
         })
-        console.log("checkpoint 3")
+    }
+
+    static async getSpots() {
+        const data = repo.find({
+            where: {
+                deletedAt: IsNull()
+            }
+        })
+        if (data == null) {
+            throw new Error("NO_DATA___SOMEHOW")
+        }
+        return data
     }
 
     static async getSpotById(id: number) {
@@ -50,19 +62,29 @@ export class SpotService {
         return data
     }
 
-    static async deleteSpot(spot: string, user_id: number) {
+    static async deleteSpot(spot_id: any) {
         const data = await repo.findOne({
             where: {
-                name: spot,
-                addedBy: user_id,
+                spotId: spot_id.id,
                 deletedAt: IsNull()
             }
         })
         if (data == null) {
             throw new Error("SPOT_NOT_EXIST")
         }
-        await repo.save({
-            deletedAt: Date.now()
+        await repo.update({spotId: data.spotId},{ deletedAt: new Date()})
+    }
+
+    static async redactSpot(spot_id: number, spot: SpotModel) {
+        const data = await repo.findOne({
+            where: {
+                spotId: spot_id,
+                deletedAt: IsNull()
+            }
         })
+        if (data == null) {
+            throw new Error("SPOT_NOT_EXIST")
+        }
+        await repo.update({spotId: data.spotId}, {name: spot.name, location: spot.location, description: spot.description, updatedAt: new Date()})
     }
 }

@@ -7,6 +7,9 @@ import { UserRoute } from './routes/user.route'
 import http from 'http'
 import { SpotRoute } from './routes/spot.route'
 import { UserService } from './services/user.service'
+import https from 'https'
+import fs from 'fs'
+
 
 const app = express()
 app.use(express.json())
@@ -23,11 +26,21 @@ app.get('/', (req, res) => {
 })
 
 
+const sslOption = {
+    key: fs.readFileSync('./src/crypto/key.pem'),
+    cert: fs.readFileSync('./src/crypto/cert.pem')
+}
+
 configDotenv()
 AppDataSource.initialize().then(() => {
     console.log('connected to database')
     const port = process.env.SERVER_PORT || 3000
-    app.listen(port, () => console.log(`app started on port ${port}`))
+
+
+    https.createServer(sslOption, app)
+        .listen(port, () => 
+            console.log(`app started on port ${port}`)
+        )
 })
 .catch(e=>{
     console.log('erm, didnt connect oopsie')
